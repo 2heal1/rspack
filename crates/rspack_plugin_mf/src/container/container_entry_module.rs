@@ -325,6 +325,15 @@ impl ExposeModuleMap {
             .join(", "),
         )
       } else {
+        let has_wasm_async = modules_iter.clone().any(|(_, module, _, _)| {
+          if let Some(module) = module {
+            let module_graph = compilation.get_module_graph();
+            let module_type = module.module_type();
+            matches!(module_type, rspack_core::ModuleType::WasmAsync)
+          } else {
+            false
+          }
+        });
         let block_promise = block_promise(Some(block_id), runtime_requirements, compilation, "");
         let module_raw = returning_function(
           &compilation.options.output.environment,
@@ -346,7 +355,23 @@ impl ExposeModuleMap {
           ),
           "",
         );
-        format!("return {block_promise}.then({module_raw});")
+        if has_wasm_async {
+          format!(
+            r#"
+            return {block_promise}.then({module_raw}).then(function(exports) {{
+              // handle WebAssembly async module
+              if (exports && typeof exports.then === 'function') {{
+                return exports.then(function(wasmModule) {{
+                  return wasmModule;
+                }});
+              }}
+              return exports;
+            }});
+          "#
+          )
+        } else {
+          format!("return {block_promise}.then({module_raw});")
+        }
       };
       module_map.push((name.to_string(), str));
     }
