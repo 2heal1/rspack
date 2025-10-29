@@ -3296,7 +3296,7 @@ class IndependentSharePlugin {
     // (undocumented)
     apply(compiler: Compiler): void;
     // (undocumented)
-    buildAssets: Record<string, string>;
+    buildAssets: ShareFallback;
     // (undocumented)
     compilers: Map<string, Compiler>;
     // (undocumented)
@@ -7273,6 +7273,7 @@ export type SharedConfig = {
     strictVersion?: boolean;
     version?: false | string;
     treeshake?: boolean;
+    usedExports?: string[];
 };
 
 // @public (undocumented)
@@ -7300,6 +7301,9 @@ type SharedOptimizationSplitChunksCacheGroup = {
     maxInitialRequests?: number;
     automaticNameDelimiter?: string;
 };
+
+// @public (undocumented)
+type ShareFallback = Record<string, [string, string][]>;
 
 // @public (undocumented)
 class SharePlugin {
@@ -7333,6 +7337,8 @@ class SharePlugin {
             strictVersion: boolean | undefined;
         };
     }[];
+    // (undocumented)
+    _sharedOptions: NormalizedSharedOptions;
     // (undocumented)
     _shareScope: string | undefined;
 }

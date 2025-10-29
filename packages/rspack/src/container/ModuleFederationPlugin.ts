@@ -1,6 +1,9 @@
 import type { Compiler } from "../Compiler";
 import type { ExternalsType } from "../config";
-import { IndependentSharePlugin } from "../sharing/IndependentSharePlugin";
+import {
+	IndependentSharePlugin,
+	type ShareFallback
+} from "../sharing/IndependentSharePlugin";
 import type { SharedConfig } from "../sharing/SharePlugin";
 import { isRequiredVersion } from "../sharing/utils";
 import type { ModuleFederationPluginV1Options } from "./ModuleFederationPluginV1";
@@ -54,13 +57,11 @@ export class ModuleFederationPlugin {
 			async () => {
 				if (runtimePluginApplied) return;
 				runtimePluginApplied = true;
-				const shareFallbacks =
-					(compiler as any).__independentShareBuildAssets ?? {};
 				const entryRuntime = getDefaultEntryRuntime(
 					paths,
 					this._options,
 					compiler,
-					shareFallbacks
+					this._independentSharePlugin?.buildAssets || {}
 				);
 				new ModuleFederationRuntimePlugin({
 					entryRuntime
@@ -218,14 +219,12 @@ function getPaths(options: ModuleFederationPluginOptions): RuntimePaths {
 	};
 }
 
-type ShareFallbacks = Record<string, [string, string]>;
-
 // 注入 fallback
 function getDefaultEntryRuntime(
 	paths: RuntimePaths,
 	options: ModuleFederationPluginOptions,
 	compiler: Compiler,
-	shareFallbacks: ShareFallbacks
+	treeshakeShareFallbacks: ShareFallback
 ) {
 	const runtimePlugins = getRuntimePlugins(options);
 	const remoteInfos = getRemoteInfos(options);
@@ -254,14 +253,14 @@ function getDefaultEntryRuntime(
 			", "
 		)}]`,
 		`const __module_federation_remote_infos__ = ${JSON.stringify(remoteInfos)}`,
-		`const __module_federation_share_fallbacks__ = ${JSON.stringify(
-			shareFallbacks
-		)}`,
 		`const __module_federation_container_name__ = ${JSON.stringify(
 			options.name ?? compiler.options.output.uniqueName
 		)}`,
 		`const __module_federation_share_strategy__ = ${JSON.stringify(
 			options.shareStrategy ?? "version-first"
+		)}`,
+		`const __module_federation_share_fallbacks__ = ${JSON.stringify(
+			treeshakeShareFallbacks
 		)}`,
 		IS_BROWSER
 			? MF_RUNTIME_CODE

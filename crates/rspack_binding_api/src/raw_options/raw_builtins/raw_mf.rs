@@ -5,8 +5,9 @@ use napi_derive::napi;
 use rspack_plugin_mf::{
   CollectShareEntryPluginOptions, ConsumeOptions, ConsumeSharedPluginOptions, ConsumeVersion,
   ContainerPluginOptions, ContainerReferencePluginOptions, ExposeOptions,
-  ModuleFederationRuntimePluginOptions, ProvideOptions, ProvideVersion, RemoteOptions,
-  ShareContainerEntryOptions, ShareContainerPluginOptions,
+  ModuleFederationRuntimePluginOptions, OptimizeDependencyReferencedExportsPluginOptions,
+  OptimizeSharedConfig, ProvideOptions, ProvideVersion, RemoteOptions, ShareContainerEntryOptions,
+  ShareContainerPluginOptions,
 };
 
 use crate::options::{
@@ -194,6 +195,46 @@ impl From<RawConsumeSharedPluginOptions> for ConsumeSharedPluginOptions {
         .map(|(k, v)| (k, Arc::new(v)))
         .collect(),
       enhanced: value.enhanced,
+    }
+  }
+}
+
+#[derive(Debug)]
+#[napi(object)]
+pub struct RawOptimizeSharedConfig {
+  pub share_key: String,
+  pub treeshake: bool,
+  pub used_exports: Option<Vec<String>>,
+}
+
+impl From<RawOptimizeSharedConfig> for OptimizeSharedConfig {
+  fn from(value: RawOptimizeSharedConfig) -> Self {
+    Self {
+      share_key: value.share_key,
+      treeshake: value.treeshake,
+      used_exports: value.used_exports.unwrap_or_default(),
+    }
+  }
+}
+
+#[derive(Debug)]
+#[napi(object)]
+pub struct RawOptimizeDependencyReferencedExportsPluginOptions {
+  pub shared: Vec<RawOptimizeSharedConfig>,
+  pub ignored_runtime: Option<Vec<String>>,
+}
+
+impl From<RawOptimizeDependencyReferencedExportsPluginOptions>
+  for OptimizeDependencyReferencedExportsPluginOptions
+{
+  fn from(value: RawOptimizeDependencyReferencedExportsPluginOptions) -> Self {
+    Self {
+      shared: value
+        .shared
+        .into_iter()
+        .map(|config| config.into())
+        .collect(),
+      ignored_runtime: value.ignored_runtime.unwrap_or_default(),
     }
   }
 }
