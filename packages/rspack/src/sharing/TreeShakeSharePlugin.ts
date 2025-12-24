@@ -8,26 +8,26 @@ import { normalizeSharedOptions } from "./SharePlugin";
 export interface TreeshakeSharePluginOptions {
 	mfConfig: ModuleFederationPluginOptions;
 	plugins?: Plugins;
-	reshake?: boolean;
+	reShake?: boolean;
 }
 
 export class TreeshakeSharePlugin {
 	mfConfig: ModuleFederationPluginOptions;
 	outputDir: string;
 	plugins?: Plugins;
-	reshake?: boolean;
+	reShake?: boolean;
 
 	name = "TreeshakeSharePlugin";
 	constructor(options: TreeshakeSharePluginOptions) {
-		const { mfConfig, plugins, reshake } = options;
+		const { mfConfig, plugins, reShake } = options;
 		this.mfConfig = mfConfig;
 		this.outputDir = mfConfig.independentShareDir || "independent-packages";
 		this.plugins = plugins;
-		this.reshake = Boolean(reshake);
+		this.reShake = Boolean(reShake);
 	}
 
 	apply(compiler: Compiler) {
-		const { mfConfig, outputDir, plugins, reshake } = this;
+		const { mfConfig, outputDir, plugins, reShake } = this;
 		const { name, shared, library } = mfConfig;
 		if (!shared) {
 			return;
@@ -37,7 +37,7 @@ export class TreeshakeSharePlugin {
 			return;
 		}
 
-		if (!reshake) {
+		if (!reShake) {
 			new OptimizeDependencyReferencedExportsPlugin(
 				sharedOptions,
 				mfConfig.injectUsedExports,
@@ -55,7 +55,7 @@ export class TreeshakeSharePlugin {
 				shared: shared,
 				outputDir,
 				plugins,
-				treeshake: reshake,
+				treeshake: reShake,
 				library
 			}).apply(compiler);
 		}
